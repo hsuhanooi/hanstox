@@ -2,6 +2,8 @@ require 'mechanize'
 require 'logger'
 require 'digest'
 
+DEBUG = false
+
 def parse_page(page, options={})
   no = Nokogiri::HTML(JSON.parse(page.body.match(/[^{]+(.*)/)[1][0...-1])["componentData"])
   years = no.css("table.r_table1").css("thead > tr > th").map{|e| e.text}
@@ -66,6 +68,7 @@ def scrape(quote)
     page = mech.get(url)
 
     k_ratios = "http://financials.morningstar.com/financials/getKeyStatPart.html?&callback=jsonp1438924494296&t=XNAS:#{quote}&region=usa&culture=en-US&cur=&order=asc&_=1438924494334"
+    puts k_ratios if DEBUG
     k_page = mech.get(k_ratios)
 
     years, rows = parse_page(k_page)
@@ -92,17 +95,18 @@ def scrape(quote)
       }
     }
     puts "Finished Scraping #{quote}"
-  rescue
+  rescue StandardError => e
     puts "Unable to scrape #{quote}"
+    raise e
   end
 end
 
-# quotes = ["MU", "FB", "AAPL", "BABA", "CHK", "EBAY", "GLD", "GPRO", "INTC", "MSFT", "NTDOY", "OIH", "QRVO", 
-#   "VGK", "VMW", "AMZN", "ARMH", "BIB", "COP", "DIS", "NFLX", "SBUX", "VOO", "XOM", "AXP", "PYPL", 
-#   "SWKS", "QCOM", "ORCL", "RHT", "BBY", "ATVI", "CMG", "FIT", "AMD", "AVGO", "AZO", "BBRY", "BIDU", 
-#   "BOX", "BRCM", "BRK.A", "BRK.B", "COST", "CRM", "CSCO", "DATA", "EA", "EMC", "ETSY", "EWI", "EWP", 
-#   "EWW", "EXPE", "FEZ", "GS", "KING", "KORS", "LNKD", "LRCX", "MA", "MKL", "MXIM", "NTAP", "OAS", 
-#   "PBR", "NVDA", "NXPI", "QQQ", "S", "SALE", "SAP", "SHAK", "SNDK", "SNE", "SPY", "SYMC", "TGT", "TMUS", 
+# quotes = ["MU", "FB", "AAPL", "BABA", "CHK", "EBAY", "GLD", "GPRO", "INTC", "MSFT", "NTDOY", "OIH", "QRVO",
+#   "VGK", "VMW", "AMZN", "ARMH", "BIB", "COP", "DIS", "NFLX", "SBUX", "VOO", "XOM", "AXP", "PYPL",
+#   "SWKS", "QCOM", "ORCL", "RHT", "BBY", "ATVI", "CMG", "FIT", "AMD", "AVGO", "AZO", "BBRY", "BIDU",
+#   "BOX", "BRCM", "BRK.A", "BRK.B", "COST", "CRM", "CSCO", "DATA", "EA", "EMC", "ETSY", "EWI", "EWP",
+#   "EWW", "EXPE", "FEZ", "GS", "KING", "KORS", "LNKD", "LRCX", "MA", "MKL", "MXIM", "NTAP", "OAS",
+#   "PBR", "NVDA", "NXPI", "QQQ", "S", "SALE", "SAP", "SHAK", "SNDK", "SNE", "SPY", "SYMC", "TGT", "TMUS",
 #   "TRIP", "TWTR", "V", "VNR", "VOOV", "VOOG", "VZ", "WMT", "XLNX", "YELP", "YHOO", "Z", "ZNGA", "GOOGL"]
 
 # quotes.each {|q|

@@ -19,7 +19,7 @@ import matplotlib.pyplot as plt
 
 import os
 
-os.chdir('/Users/hsooi/Work/personal/hanstox')
+os.chdir('/Users/hhooi/Work/personal/hanstox')
 
 class Quote:
     Weights = [1/15.0, 2/15.0,3/15.0,4/15.0,5/15.0]
@@ -152,6 +152,10 @@ class Quote:
         safety = 0.75
         safe = eps_growth * safety
         return min(safe * 100, 15)
+        
+    def calculate_yearly_growth(self, yearly_eps):
+        (yearly_eps - yearly_eps.shift(1)) / yearly_eps.shift(1)
+        
 
     def calculate_mg_value(self,cur_date,growth=None):
         cur_dt = p.to_datetime(cur_date)
@@ -163,8 +167,21 @@ class Quote:
         return (cur_date, epsmg, eps_growth, value)
 
     def add_series(self, df, name, ser):
-        padded = pad(ser, ser[-1], self.max_date())
+        padded = self.pad(ser, ser[-1], self.max_date())
         df[name] = padded
+        
+    def plot_financials_with_fcf(self):
+        df = DataFrame({'close' : self.close})
+    
+        growth = self.calculate_eps_growthmg(self.yearly_fcf())
+        print("Plotting financials using growth: %.2f" % growth)
+        mg_df = self.past_mg_value(growth=growth)
+        self.add_series(df, 'Valuemg Sell', mg_df['Valuemg'] * 1.1)
+        self.add_series(df, 'Valuemg Buy', mg_df['Valuemg'] * 0.75)
+        sub = df[df['Valuemg Sell'] > -1000].copy()
+        sub['mavg_50day'] = rolling_mean(sub.close, 50, min_periods=1).shift(1)
+        sub['mavg_200day'] = rolling_mean(sub.close, 200, min_periods=1).shift(1)
+        sub.plot()
 
     def plot_financials(self):
         df = DataFrame({'close' : self.close})
@@ -178,9 +195,9 @@ class Quote:
         sub['mavg_50day'] = rolling_mean(sub.close, 50, min_periods=1).shift(1)
         sub['mavg_200day'] = rolling_mean(sub.close, 200, min_periods=1).shift(1)
         sub.plot()
-q = Quote("ATVI")
+q = Quote("GOOGL")
 #print(q.past_mg_value(growth=4.5))
-q.plot_financials()
+q.plot_financials_with_fcf()
 
 
 
